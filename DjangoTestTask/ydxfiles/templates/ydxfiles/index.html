@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YDXFiles</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+
+<div class="container position-relative">
+    <div class="row justify-content-center">
+        <div class="col-xl-6">
+            <div class="text-center text-white">
+                <h1 class="mb-5" style="color: #FF8900;">Yandex Disk Checker</h1>
+                <form id="subscribeForm" class="form-subscribe" method="POST">
+                    {% csrf_token %}
+                    <div class="row">
+                        <div class="col">
+                            <input class="form-control form-control-lg" name="url" id="url" type="url" placeholder="Ввести ссылку">
+                        </div>
+                        <div class="col-auto">
+                            <button class="btn btn-primary btn-lg" id="submitButton" type="submit">Искать</button>
+                        </div>
+                    </div>
+                </form>
+                <div class="mt-5" id="filesContainer" style="color: #FF8900;">
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+<script>
+    document.getElementById('subscribeForm').addEventListener('submit', function (event) {
+    event.preventDefault(); // Предотвращаем стандартное поведение формы
+
+    var formData = new FormData(this);
+
+    fetch('{% url "index" %}', {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-CSRFToken': '{{ csrf_token }}'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        console.log(data); // Отладка: Проверьте структуру данных
+        var filesContainer = document.getElementById('filesContainer');
+        if (data.files && data.files.length > 0) {
+            var list = '<ul class="list-group">';
+            data.files.forEach(file => {
+                if (file.download_url) {
+                    // Если download_url присутствует, отображаем кнопку
+                    list += '<li class="list-group-item">' +
+                        file.filename +
+                        '<a href="' + file.download_url + '" class="btn btn-primary btn-sm float-right" download>Скачать</a>' +
+                        '</li>';
+                } else {
+                    // Если download_url отсутствует, отображаем текст
+                    list += '<li class="list-group-item">' +
+                        file.filename +
+                        '<span class="float-right text-muted">Папка</span>' +
+                        '</li>';
+                }
+            });
+            list += '</ul>';
+            filesContainer.innerHTML = list;
+        } else {
+            filesContainer.innerHTML = '<p>Файлы не найдены.</p>';
+        }
+    })
+    .catch(error => {
+        console.error('Ошибка:', error);
+    });
+});
+
+</script>
+
+</body>
+</html>
